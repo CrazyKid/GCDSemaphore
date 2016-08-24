@@ -87,8 +87,8 @@
     });
     /**
      *  log
-     *  the second request responseObject:{data}
      *  the first request responseObject:{data}
+     *  the second request responseObject:{data}
      *  all requests completed
      */
 }
