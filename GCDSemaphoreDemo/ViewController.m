@@ -20,7 +20,13 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view, typically from a nib.
 //    [self requestUsingGroup];
-    [self requestUsingSemaphore];
+    
+//    [self requestUsingSemaphore];
+    
+    /**
+     *  this method is created on 2016.09.02
+     */
+    [self requestUsingSemaphoreUpdate];
 }
 
 - (void)requestUsingGroup {
@@ -83,6 +89,49 @@
         //
         dispatch_async(dispatch_get_main_queue(), ^{
             NSLog(@"all requests completed");
+        });
+    });
+    /**
+     *  log
+     *  the first request responseObject:{data}
+     *  the second request responseObject:{data}
+     *  all requests completed
+     */
+}
+
+//*****************************     2016.09.02 update  **************************************
+//******************************     create the method `- (void)requestUsingSemaphoreUpdate`   *************************************
+//*******************************************************************
+
+- (void)requestUsingSemaphoreUpdate {
+    
+    static dispatch_semaphore_t semaphore;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        semaphore = dispatch_semaphore_create(1);
+    });
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+        //request 1
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        [[AFHTTPSessionManager manager] POST:kUrlString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            NSLog(@"the first request responseObject: %@",responseObject);
+            dispatch_semaphore_signal(semaphore);
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            NSLog(@"error : %@",error.localizedDescription);
+        }];
+        //request 2
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        [[AFHTTPSessionManager manager] POST:kUrlString parameters:nil progress:nil success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+            NSLog(@"the second request responseObject: %@",responseObject);
+            dispatch_semaphore_signal(semaphore);
+        } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+            NSLog(@"error : %@",error.localizedDescription);
+        }];
+        //
+        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+        dispatch_async(dispatch_get_main_queue(), ^{
+            NSLog(@"all requests completed");
+            dispatch_semaphore_signal(semaphore);
         });
     });
     /**
